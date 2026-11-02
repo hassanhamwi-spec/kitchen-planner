@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mutfak">
+<title>مصمم المطابخ</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#222;--mut:#777;--acc:#b5651d;--line:#ddd}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,system-ui,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:40px}
+header{background:var(--acc);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+header h1{font-size:17px;margin:0}
+header button{background:#fff;color:var(--acc);border:0;border-radius:8px;padding:6px 12px;font-weight:700}
+nav{display:flex;gap:6px;padding:10px;overflow-x:auto;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:50px;z-index:4}
+nav button{flex:1;white-space:nowrap;border:1px solid var(--line);background:#fafafa;border-radius:20px;padding:8px 12px;font-size:14px}
+nav button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+section{display:none;padding:12px}
+section.on{display:block}
+.card{background:var(--card);border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px #0001}
+h2{font-size:16px;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:13px;color:var(--mut);display:block}
+input,select{width:100%;font-size:17px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:3px}
+button.p{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:11px 14px;font-size:15px;font-weight:700}
+button.s{background:#eee;border:0;border-radius:10px;padding:10px 12px;font-size:15px}
+button.d{background:#fde8e8;color:#b00;border:0;border-radius:8px;padding:8px 10px;font-size:16px}
+.mod{display:grid;grid-template-columns:1.1fr 1.3fr .8fr auto;gap:6px;align-items:end;margin-bottom:8px}
+.sum{font-size:14px;margin:8px 0}
+.warn{color:#b00;font-weight:700}.ok{color:#2a7d2a;font-weight:700}
+svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:center}
+th{background:#f0ebe0;font-size:12px}
+td:first-child,th:first-child{text-align:start}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.tag{display:inline-block;background:#f0ebe0;border-radius:6px;padding:2px 8px;font-size:13px;margin:2px}
+@media print{header,nav,.noprint{display:none!important}section{display:block!important}body{background:#fff}.card{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+<header><h1 id="ttl"></h1><button id="langBtn"></button></header>
+<nav id="nav"></nav>
+
+<section id="s-set"><div class="card"><h2 id="h-set"></h2><div class="grid" id="setGrid"></div></div>
+<div class="card noprint"><button class="s" id="resetBtn"></button></div></section>
+
+<section id="s-lay">
+ <div class="card"><h2 id="h-base"></h2><div id="baseList"></div>
+  <div class="sum" id="baseSum"></div>
+  <div class="row"><button class="s" id="addBase"></button><button class="p" id="autoBase"></button></div></div>
+ <div class="card"><h2 id="h-wall"></h2><div id="wallList"></div>
+  <div class="sum" id="wallSum"></div>
+  <div class="row"><button class="s" id="addWall"></button><button class="p" id="autoWall"></button></div></div>
+</section>
+
+<section id="s-draw"><div class="card"><h2 id="h-draw"></h2><div id="drawBox"></div>
+ <div class="row noprint"><button class="p" onclick="window.print()" id="pr1"></button></div></div></section>
+
+<section id="s-cut"><div class="card"><h2 id="h-cut"></h2><div id="cutBox"></div>
+ <div class="row noprint"><button class="p" onclick="window.print()" id="pr2"></button></div></div>
+ <div class="card"><h2 id="h-sheets"></h2><div id="sheetBox"></div></div></section>
+
+<script>
+const TXT={
+ar:{title:"مصمم المطابخ",tabs:["الإعدادات","التوزيع","الرسم","قائمة القص"],lang:"Türkçe",
+ set:"إعدادات المطبخ والخشب",base:"الخزائن الأرضية",wall:"الخزائن العلوية",draw:"واجهة المطبخ",cut:"قائمة القص (MDF)",sheets:"توزيع القص على الألواح",
+ f:{wallLen:"طول الجدار (سم)",wallTotalH:"ارتفاع الجدار (سم)",baseH:"ارتفاع الخزانة الأرضية (سم)",legH:"ارتفاع الرجلين (سم)",counterT:"سماكة الطاولة (سم)",baseD:"عمق الأرضي (سم)",wallH:"ارتفاع العلوي (سم)",wallBottom:"ارتفاع العلوي عن الأرض (سم)",wallD:"عمق العلوي (سم)",t:"سماكة MDF (سم)",backT:"سماكة الظهر (سم)",sheetL:"طول اللوح (سم)",sheetW:"عرض اللوح (سم)",kerf:"سماكة المنشار (سم)"},
+ width:"العرض سم",type:"النوع",count:"العدد",door:"أبواب",drawer:"أدراج",add:"+ أضف خزانة",auto:"توزيع تلقائي",reset:"رجوع للإعدادات الافتراضية",
+ total:"المجموع",of:"من",short:"ناقص",over:"زيادة",match:"مطابق",
+ part:"القطعة",w:"العرض",h:"الطول",q:"عدد",mod:"خزانة",print:"طباعة / PDF",
+ sheetsNeed:"عدد ألواح الجسم",backNeed:"عدد ألواح الظهر",waste:"الهدر",pcs:"قطعة",tooBig:"قطعة أكبر من اللوح:",
+ partN:{side:"جنب",bottom:"قاعدة",rail:"عارضة",shelf:"رف",back:"ظهر",door:"باب",top:"سقف",front:"واجهة درج",dside:"جنب صندوق درج",dend:"وجه/خلف صندوق",dbot:"قاعدة صندوق"},
+ B:"أ",Wl:"ع",bodyMat:"MDF جسم",backMat:"MDF ظهر",note:"ملاحظة: الأبعاد تقريبية وللمراجعة بالورشة. السكك 2.5سم لكل جنب."},
+tr:{title:"Mutfak Tasarımcısı",tabs:["Ayarlar","Yerleşim","Çizim","Kesim Listesi"],lang:"عربي",
+ set:"Mutfak ve malzeme ayarları",base:"Alt dolaplar",wall:"Üst dolaplar",draw:"Mutfak cephesi",cut:"Kesim listesi (MDF)",sheets:"Plakalara kesim planı",
+ f:{wallLen:"Duvar uzunluğu (cm)",wallTotalH:"Duvar yüksekliği (cm)",baseH:"Alt dolap yüksekliği (cm)",legH:"Ayak yüksekliği (cm)",counterT:"Tezgah kalınlığı (cm)",baseD:"Alt dolap derinliği (cm)",wallH:"Üst dolap yüksekliği (cm)",wallBottom:"Üst dolap zeminden (cm)",wallD:"Üst dolap derinliği (cm)",t:"MDF kalınlığı (cm)",backT:"Arkalık kalınlığı (cm)",sheetL:"Plaka boyu (cm)",sheetW:"Plaka eni (cm)",kerf:"Testere payı (cm)"},
+ width:"Genişlik cm",type:"Tip",count:"Adet",door:"Kapak",drawer:"Çekmece",add:"+ Dolap ekle",auto:"Otomatik yerleşim",reset:"Varsayılana dön",
+ total:"Toplam",of:"/",short:"eksik",over:"fazla",match:"tam",
+ part:"Parça",w:"Eni",h:"Boyu",q:"Adet",mod:"Dolap",print:"Yazdır / PDF",
+ sheetsNeed:"Gövde plaka sayısı",backNeed:"Arkalık plaka sayısı",waste:"Fire",pcs:"parça",tooBig:"Plakadan büyük parça:",
+ partN:{side:"Yan",bottom:"Taban",rail:"Kuşak",shelf:"Raf",back:"Arkalık",door:"Kapak",top:"Tavan",front:"Çekmece ön",dside:"Çekmece yan",dend:"Çekmece ön/arka",dbot:"Çekmece tabanı"},
+ B:"A",Wl:"Ü",bodyMat:"MDF gövde",backMat:"MDF arkalık",note:"Not: Ölçüler yaklaşıktır, atölyede kontrol edin. Ray payı her yan 2.5cm."}
+};
+const DEF={lang:"ar",wallLen:300,wallTotalH:260,baseH:72,legH:10,counterT:4,baseD:58,wallH:70,wallBottom:145,wallD:32,t:1.8,backT:0.6,sheetL:244,sheetW:122,kerf:0.3,
+ base:[{w:60,type:"door",n:1},{w:60,type:"drawer",n:3},{w:60,type:"door",n:1},{w:60,type:"door",n:1},{w:60,type:"door",n:1}],
+ wall:[{w:60,type:"door",n:1},{w:60,type:"door",n:1},{w:60,type:"door",n:1},{w:60,type:"door",n:1},{w:60,type:"door",n:1}]};
+let S=load();
+function load(){try{const r=localStorage.getItem("kp1");if(r)return Object.assign({},DEF,JSON.parse(r))}catch(e){}return JSON.parse(JSON.stringify(DEF))}
+function save(){try{localStorage.setItem("kp1",JSON.stringify(S))}catch(e){}}
+const tr=()=>TXT[S.lang];
+const $=id=>document.getElementById(id);
+const num=v=>{const x=parseFloat(v);return isFinite(x)?x:0};
+const r1=x=>Math.round(x*10)/10;
+
+function parts(m,kind,idx){
+ const t=S.t,bk=S.backT,N=tr().partN,out=[];
+ const lab=(kind==="base"?tr().B:tr().Wl)+(idx+1);
+ const add=(name,w,h,q,mat)=>{if(w>0&&h>0&&q>0)out.push({name,w:r1(w),h:r1(h),q,mat,mod:lab})};
+ const W=m.w,iw=W-2*t;
+ if(kind==="base"){
+  const H=S.baseH,D=S.baseD;
+  add(N.side,D,H,2,"b");add(N.bottom,iw,D-1,1,"b");add(N.rail,iw,8,2,"b");
+  if(m.type==="door")add(N.shelf,iw,D-3,1,"b");
+  add(N.back,W-0.6,H-0.6,1,"k");
+  if(m.type==="door"){const n=Math.max(1,m.n);add(N.door,W/n-0.3,H-0.3,n,"b")}
+  else{const n=Math.max(1,m.n),fh=(H-0.3)/n-0.3;add(N.front,W-0.3,fh,n,"b");
+   add(N.dside,S.baseD-6,12,2*n,"b");add(N.dend,iw-5,12,2*n,"b");add(N.dbot,iw-5,S.baseD-6,n,"k")}
+ }else{
+  const H=S.wallH,D=S.wallD;
+  add(N.side,D,H,2,"b");add(N.top,iw,D-1,2,"b");add(N.shelf,iw,D-3,1,"b");
+  add(N.back,W-0.6,H-0.6,1,"k");
+  const n=Math.max(1,m.n);add(N.door,W/n-0.3,H-0.3,n,"b");
+ }
+ return out;
+}
+function allParts(){
+ let p=[];S.base.forEach((m,i)=>p=p.concat(parts(m,"base",i)));
+ S.wall.forEach((m,i)=>p=p.concat(parts(m,"wall",i)));
+ return p;
+}
+function pack(items){
+ const L=S.sheetL,W=S.sheetW,k=S.kerf,sheets=[],bad=[];
+ const arr=items.map(p=>({a:Math.max(p.w,p.h),b:Math.min(p.w,p.h),name:p.name,mod:p.mod}))
+  .sort((x,y)=>y.b-x.b||y.a-x.a);
+ for(const it of arr){
+  if(it.a>L+1e-6||it.b>W+1e-6){bad.push(it);continue}
+  let done=false;
+  for(const sh of sheets){
+   for(const st of sh.strips){
+    if(it.b<=st.h+1e-6&&st.used+it.a<=L+1e-6){sh.pieces.push({x:st.used,y:st.y,w:it.a,h:it.b,name:it.name,mod:it.mod});st.used+=it.a+k;done=true;break}
+   }
+   if(done)break;
+   if(sh.usedH+it.b<=W+1e-6){
+    const st={y:sh.usedH,h:it.b,used:0};sh.strips.push(st);sh.usedH+=it.b+k;
+    sh.pieces.push({x:0,y:st.y,w:it.a,h:it.b,name:it.name,mod:it.mod});st.used=it.a+k;done=true;break;
+   }
+  }
+  if(!done){
+   const sh={strips:[],pieces:[],usedH:0};sheets.push(sh);
+   const st={y:0,h:it.b,used:it.a+k};sh.strips.push(st);sh.usedH=it.b+k;
+   sh.pieces.push({x:0,y:0,w:it.a,h:it.b,name:it.name,mod:it.mod});
+  }
+ }
+ const area=arr.reduce((s,i)=>s+i.a*i.b,0);
+ const waste=sheets.length?1-area/(sheets.length*L*W):0;
+ return{sheets,bad,waste};
+}
+
+function renderSettings(){
+ const T=tr();let h="";
+ for(const k of Object.keys(T.f)){
+  h+=`<div><label>${T.f[k]}</label><input type="number" inputmode="decimal" step="any" data-k="${k}" value="${S[k]}"></div>`;
+ }
+ $("setGrid").innerHTML=h;
+ $("setGrid").querySelectorAll("input").forEach(i=>i.onchange=()=>{S[i.dataset.k]=num(i.value);save();renderAll(false)});
+}
+function modList(kind){
+ const T=tr(),arr=S[kind];let h="";
+ arr.forEach((m,i)=>{
+  const typeSel=kind==="base"?`<select data-i="${i}" data-f="type"><option value="door"${m.type==="door"?" selected":""}>${T.door}</option><option value="drawer"${m.type==="drawer"?" selected":""}>${T.drawer}</option></select>`:`<div style="padding:10px 0;font-size:15px">${T.door}</div>`;
+  h+=`<div class="mod"><div><label>${(kind==="base"?T.B:T.Wl)+(i+1)} · ${T.width}</label><input type="number" inputmode="decimal" step="any" data-i="${i}" data-f="w" value="${m.w}"></div>
+  <div><label>${T.type}</label>${typeSel}</div>
+  <div><label>${T.count}</label><input type="number" inputmode="numeric" data-i="${i}" data-f="n" value="${m.n}"></div>
+  <button class="d" data-del="${i}">✕</button></div>`;
+ });
+ const box=$(kind+"List");box.innerHTML=h;
+ box.querySelectorAll("[data-f]").forEach(el=>el.onchange=()=>{
+  const m=S[kind][+el.dataset.i],f=el.dataset.f;
+  m[f]=f==="type"?el.value:num(el.value);
+  if(f==="n"&&m.n<1)m.n=1;save();renderAll(false)});
+ box.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S[kind].splice(+b.dataset.del,1);save();renderAll(true)});
+ const sum=S[kind].reduce((s,m)=>s+m.w,0),d=r1(S.wallLen-sum);
+ let st=d===0?`<span class="ok">${T.match}</span>`:d>0?`<span class="warn">${Math.abs(d)} ${T.short}</span>`:`<span class="warn">${Math.abs(d)} ${T.over}</span>`;
+ $(kind+"Sum").innerHTML=`${T.total}: ${r1(sum)} ${T.of} ${S.wallLen} — ${st}`;
+}
+function autoFill(kind){
+ const n=Math.max(1,Math.round(S.wallLen/60)),w=r1(S.wallLen/n);
+ S[kind]=Array.from({length:n},(_,i)=>{const o=S[kind][i];return{w:w,type:o?o.type:"door",n:o?o.n:1}});
+ save();renderAll(true);
+}
+
+function drawing(){
+ const T=tr(),L=S.wallLen,H=S.wallTotalH,pad=14;
+ const vw=L+pad*2,vh=H+pad*2+10;
+ const Y=y=>pad+H-y; // y from floor
+ let s=`<svg viewBox="0 0 ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">`;
+ s+=`<rect x="${pad}" y="${pad}" width="${L}" height="${H}" fill="#faf7f0" stroke="#999" stroke-width=".8"/>`;
+ s+=`<line x1="${pad-6}" y1="${Y(0)}" x2="${pad+L+6}" y2="${Y(0)}" stroke="#555" stroke-width="1.2"/>`;
+ // base
+ let x=pad;
+ const bTop=S.legH+S.baseH;
+ S.base.forEach((m,i)=>{
+  s+=`<rect x="${x}" y="${Y(bTop)}" width="${m.w}" height="${S.baseH}" fill="#e9d3b0" stroke="#6b4a1f" stroke-width=".6"/>`;
+  if(m.type==="door"){
+   const n=Math.max(1,m.n),dw=m.w/n;
+   for(let j=0;j<n;j++){
+    s+=`<rect x="${x+j*dw+.5}" y="${Y(bTop)+.5}" width="${dw-1}" height="${S.baseH-1}" fill="none" stroke="#6b4a1f" stroke-width=".4"/>`;
+    const hx=n===1?x+dw-5:(j%2===0?x+j*dw+dw-3:x+j*dw+3);
+    s+=`<line x1="${hx}" y1="${Y(bTop)+8}" x2="${hx}" y2="${Y(bTop)+22}" stroke="#333" stroke-width="1.2"/>`;
+   }
+  }else{
+   const n=Math.max(1,m.n),fh=S.baseH/n;
+   for(let j=0;j<n;j++){
+    s+=`<rect x="${x+.5}" y="${Y(bTop)+j*fh+.5}" width="${m.w-1}" height="${fh-1}" fill="none" stroke="#6b4a1f" stroke-width=".4"/>`;
+    s+=`<line x1="${x+m.w/2-8}" y1="${Y(bTop)+j*fh+7}" x2="${x+m.w/2+8}" y2="${Y(bTop)+j*fh+7}" stroke="#333" stroke-width="1.2"/>`;
+   }
+  }
+  s+=`<text x="${x+m.w/2}" y="${Y(S.legH)-2}" font-size="7" text-anchor="middle" fill="#333">${m.w}</text>`;
+  x+=m.w;
+ });
+ s+=`<rect x="${pad}" y="${Y(bTop+S.counterT)}" width="${Math.max(x-pad,L)}" height="${S.counterT}" fill="#555"/>`;
+ s+=`<rect x="${pad}" y="${Y(S.legH)}" width="${x-pad}" height="${S.legH}" fill="#444"/>`;
+ // wall
+ x=pad;
+ const wTop=S.wallBottom+S.wallH;
+ S.wall.forEach((m,i)=>{
+  s+=`<rect x="${x}" y="${Y(wTop)}" width="${m.w}" height="${S.wallH}" fill="#e9d3b0" stroke="#6b4a1f" stroke-width=".6"/>`;
+  const n=Math.max(1,m.n),dw=m.w/n;
+  for(let j=0;j<n;j++){
+   s+=`<rect x="${x+j*dw+.5}" y="${Y(wTop)+.5}" width="${dw-1}" height="${S.wallH-1}" fill="none" stroke="#6b4a1f" stroke-width=".4"/>`;
+   const hx=n===1?x+dw-5:(j%2===0?x+j*dw+dw-3:x+j*dw+3);
+   s+=`<line x1="${hx}" y1="${Y(S.wallBottom)-22}" x2="${hx}" y2="${Y(S.wallBottom)-8}" stroke="#333" stroke-width="1.2"/>`;
+  }
+  s+=`<text x="${x+m.w/2}" y="${Y(wTop)-2}" font-size="7" text-anchor="middle" fill="#333">${m.w}</text>`;
+  x+=m.w;
+ });
+ // overall dims
+ s+=`<text x="${vw/2}" y="${vh-3}" font-size="8" text-anchor="middle" fill="#333">${L} cm</text>`;
+ s+=`<text x="${pad+2}" y="${pad-3}" font-size="7" fill="#777">${H} cm</text>`;
+ s+="</svg>";
+ return s;
+}
+
+function cutList(){
+ const T=tr(),P=allParts();
+ let h=`<table><tr><th>${T.part}</th><th>${T.w}</th><th>${T.h}</th><th>${T.q}</th><th>${T.mod}</th></tr>`;
+ const groups={b:[],k:[]};P.forEach(p=>groups[p.mat].push(p));
+ for(const g of["b","k"]){
+  if(!groups[g].length)continue;
+  const th=g==="b"?S.t:S.backT;
+  h+=`<tr><td colspan="5" style="background:#f0ebe0;font-weight:700;text-align:start">${g==="b"?T.bodyMat:T.backMat} (${th} cm)</td></tr>`;
+  groups[g].forEach(p=>h+=`<tr><td>${p.name}</td><td>${p.w}</td><td>${p.h}</td><td>${p.q}</td><td>${p.mod}</td></tr>`);
+ }
+ h+=`</table><div class="sum" style="margin-top:10px">${T.note}</div>`;
+ return h;
+}
+function sheetsView(){
+ const T=tr(),P=allParts();let html="",L=S.sheetL,W=S.sheetW;
+ for(const g of["b","k"]){
+  const items=[];P.filter(p=>p.mat===g).forEach(p=>{for(let i=0;i<p.q;i++)items.push(p)});
+  if(!items.length)continue;
+  const res=pack(items);
+  html+=`<div class="sum"><b>${g==="b"?T.sheetsNeed:T.backNeed}: ${res.sheets.length}</b> · ${T.waste}: ${Math.round(res.waste*100)}% · ${items.length} ${T.pcs}</div>`;
+  if(res.bad.length)html+=`<div class="warn">${T.tooBig} ${res.bad.map(b=>b.mod+" "+b.name+" "+r1(b.a)+"×"+r1(b.b)).join("، ")}</div>`;
+  res.sheets.forEach((sh,i)=>{
+   let s=`<svg viewBox="0 0 ${L} ${W}" style="margin-bottom:8px"><rect width="${L}" height="${W}" fill="#fff" stroke="#333" stroke-width="1"/>`;
+   sh.pieces.forEach(p=>{
+    s+=`<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="#f4e3c4" stroke="#6b4a1f" stroke-width=".5"/>`;
+    const fs=Math.min(7,p.h/2.6,p.w/6);
+    if(fs>2.2)s+=`<text x="${p.x+p.w/2}" y="${p.y+p.h/2+fs/3}" font-size="${fs}" text-anchor="middle" fill="#222">${r1(p.w)}×${r1(p.h)}</text>`;
+   });
+   html+=s+"</svg>";
+  });
+ }
+ return html;
+}
+
+function renderStatic(){
+ const T=tr();
+ document.documentElement.lang=S.lang;document.documentElement.dir=S.lang==="ar"?"rtl":"ltr";
+ document.title=T.title;$("ttl").textContent=T.title;$("langBtn").textContent=T.lang;
+ const ids=["s-set","s-lay","s-draw","s-cut"];
+ $("nav").innerHTML=T.tabs.map((n,i)=>`<button data-t="${ids[i]}" class="${(window.cur||"s-lay")===ids[i]?"on":""}">${n}</button>`).join("");
+ $("nav").querySelectorAll("button").forEach(b=>b.onclick=()=>show(b.dataset.t));
+ $("h-set").textContent=T.set;$("h-base").textContent=T.base;$("h-wall").textContent=T.wall;$("h-draw").textContent=T.draw;$("h-cut").textContent=T.cut;$("h-sheets").textContent=T.sheets;
+ $("addBase").textContent=T.add;$("addWall").textContent=T.add;$("autoBase").textContent=T.auto;$("autoWall").textContent=T.auto;
+ $("resetBtn").textContent=T.reset;$("pr1").textContent=T.print;$("pr2").textContent=T.print;
+}
+function show(id){
+ window.cur=id;
+ document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id===id));
+ document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===id));
+ window.scrollTo(0,0);
+ if(id==="s-draw")$("drawBox").innerHTML=drawing();
+ if(id==="s-cut"){$("cutBox").innerHTML=cutList();$("sheetBox").innerHTML=sheetsView()}
+}
+function renderAll(full){
+ renderStatic();renderSettings();modList("base");modList("wall");
+ show(window.cur||"s-lay");
+}
+$("langBtn").onclick=()=>{S.lang=S.lang==="ar"?"tr":"ar";save();renderAll()};
+$("addBase").onclick=()=>{S.base.push({w:60,type:"door",n:1});save();renderAll()};
+$("addWall").onclick=()=>{S.wall.push({w:60,type:"door",n:1});save();renderAll()};
+$("autoBase").onclick=()=>autoFill("base");
+$("autoWall").onclick=()=>autoFill("wall");
+$("resetBtn").onclick=()=>{if(confirm("?")){const l=S.lang;S=JSON.parse(JSON.stringify(DEF));S.lang=l;save();renderAll()}};
+window.cur="s-lay";renderAll();
+</script>
+</body>
+</html>
