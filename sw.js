@@ -1,5 +1,5 @@
 /* Service worker: offline cache with stale-while-revalidate + "updated" notification */
-const V = 'kp-v2.6.0';
+const V = 'kp-v2.7.0';
 const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
